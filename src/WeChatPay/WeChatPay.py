@@ -93,7 +93,7 @@ def get_access_token():
 
     resp_dict = ast.literal_eval(response.content)
 
-    return resp_dict['access_token']]
+    return resp_dict['access_token']
 
 
 def get_jsapi_ticket():
@@ -105,7 +105,7 @@ def get_jsapi_ticket():
         'http://pay.you1ke.com/wechat/api/jsapi_ticket/')
     logger.info('Make request to %s' % response.url)
 
-    resp_dict=ast.literal_eval(response.content)
+    resp_dict = ast.literal_eval(response.content)
 
     return resp_dict['jsapi_ticket']
 
@@ -114,7 +114,7 @@ def get_js_config_params(url, nonce_str, time_stamp):
     """
     获取js_config初始化参数
     """
-    params={'noncestr': nonce_str,
+    params = {'noncestr': nonce_str,
               'jsapi_ticket': get_jsapi_ticket(),
               'timestamp': '%d' % time_stamp,
               'url': url}
