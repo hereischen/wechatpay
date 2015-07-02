@@ -4,8 +4,8 @@ import time
 import re
 import logging
 import datetime
+import ast
 
-from django.core.cache import cache
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 import requests
@@ -82,72 +82,39 @@ def xml_to_dict(xml):
     return sign, result
 
 
-def get_access_token(app_id=WC_PAY_APPID, app_secret=WC_PAY_APPSECRET):
+def get_access_token():
     """
     获取access_token
     :return: access_token
     """
-    key = 'wechat:app_id_%s:access_token' % app_id
-    access_token = cache.get(key)
-    if access_token:
-        # logger.debug('Get access token [%s] from cache, key: [%s]' %
-        # (access_token, key))
-        return access_token
-
-    params = {'grant_type': 'client_credential',
-              'appid': app_id,
-              'secret': app_secret}
     response = requests.get(
-        'https://api.weixin.qq.com/cgi-bin/token', params=params)
+        'http://pay.you1ke.com/wechat/api/access_token/')
     logger.info('Make request to %s' % response.url)
 
-    json_data = response.json()
-    if 'errcode' in json_data:
-        raise ValueError('Get access token failed, errcode: [%s], errmsg: [%s]' %
-                         (json_data['errcode'], json_data['errmsg']))
+    resp_dict = ast.literal_eval(response.content)
 
-    # logger.debug('Put access token [%s] into cache, key: [%s]' %
-    # (json_data['access_token'], key))
-    cache.set(key, json_data['access_token'], timeout=int(
-        json_data['expires_in']) - 60)
-    return json_data['access_token']
+    return resp_dict['access_token']]
 
 
-def get_jsapi_ticket(app_id=WC_PAY_APPID):
+def get_jsapi_ticket():
     """
     获取jsapi_ticket
     :return: jsapi_ticket
     """
-    key = 'wechat:app_id_%s:jsapi_ticket' % app_id
-    jsapi_ticket = cache.get(key)
-    if jsapi_ticket:
-        # logger.debug('Get jsapi ticket [%s] from cache, key: [%s]' %
-        # (jsapi_ticket, key))
-        return jsapi_ticket
-
-    params = {'access_token': get_access_token(),
-              'type': 'jsapi'}
     response = requests.get(
-        'https://api.weixin.qq.com/cgi-bin/ticket/getticket', params=params)
+        'http://pay.you1ke.com/wechat/api/jsapi_ticket/')
     logger.info('Make request to %s' % response.url)
 
-    json_data = response.json()
-    if json_data['errcode'] != 0:
-        raise ValueError('Get jsapi ticket failed, errcode: [%s], errmsg: [%s]' %
-                         (json_data['errcode'], json_data['errmsg']))
+    resp_dict=ast.literal_eval(response.content)
 
-    # logger.debug('Put jsapi ticket [%s] into cache, key: [%s]' %
-    # (json_data['ticket'], key))
-    cache.set(key, json_data['ticket'], timeout=int(
-        json_data['expires_in']) - 60)
-    return json_data['ticket']
+    return resp_dict['jsapi_ticket']
 
 
 def get_js_config_params(url, nonce_str, time_stamp):
     """
     获取js_config初始化参数
     """
-    params = {'noncestr': nonce_str,
+    params={'noncestr': nonce_str,
               'jsapi_ticket': get_jsapi_ticket(),
               'timestamp': '%d' % time_stamp,
               'url': url}
