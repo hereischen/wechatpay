@@ -34,6 +34,8 @@ WC_PAY_MCHID = get_config('WC_PAY_MCHID')
 WC_PAY_KEY = get_config('WC_PAY_KEY')
 WC_PAY_APPSECRET = get_config('WC_PAY_APPSECRET')
 WC_BILLS_PATH = get_config('BILLS_DIR')
+WC_PAY_ACCESS_TOKEN_URL = get_config('WC_PAY_ACCESS_TOKEN_URL')
+WC_PAY_JSAPI_TICKET_URL = get_config('WC_PAY_JSAPI_TICKET_URL')
 
 
 def dict_to_xml(params, sign):
@@ -88,7 +90,7 @@ def get_access_token():
     :return: access_token
     """
     response = requests.get(
-        'http://pay.you1ke.com/wechat/api/access_token/')
+        WC_PAY_ACCESS_TOKEN_URL)
     logger.info('Make request to %s' % response.url)
 
     resp_dict = ast.literal_eval(response.content)
@@ -102,7 +104,7 @@ def get_jsapi_ticket():
     :return: jsapi_ticket
     """
     response = requests.get(
-        'http://pay.you1ke.com/wechat/api/jsapi_ticket/')
+        WC_PAY_JSAPI_TICKET_URL)
     logger.info('Make request to %s' % response.url)
 
     resp_dict = ast.literal_eval(response.content)

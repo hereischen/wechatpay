@@ -1,6 +1,11 @@
 Changelog
 ==============================
 
+1.0.3 - Jul.03, 2015
+------------------------------
+- Bug fixing.
+- NOTE: for general usage, please use version 1.0
+
 1.0.2 - Jul.02, 2015
 ------------------------------
 - Bug fixing.
@@ -11,7 +16,7 @@ Changelog
 
 - Changed get_access_token() and get_jsapi_ticket() to get data
   from our production url.
-- NOTE: for general usage, please user version 1.0
+- NOTE: for general usage, please use version 1.0
 
 
 
