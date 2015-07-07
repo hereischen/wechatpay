@@ -1,6 +1,12 @@
 Changelog
 ==============================
 
+1.0.4 - Jul.07, 2015
+------------------------------
+- Bug fixing.
+- changed DownloadBill().post() to DownloadBill().get_bill()
+- NOTE: for general usage, please use version 1.0
+
 1.0.3 - Jul.03, 2015
 ------------------------------
 - Bug fixing.
