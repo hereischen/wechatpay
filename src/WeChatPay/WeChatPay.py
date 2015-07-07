@@ -328,7 +328,7 @@ class DownloadBill(WeChatPay):
             app_id=app_id, mch_id=mch_id, api_key=api_key)
         self.url = 'https://api.mch.weixin.qq.com/pay/downloadbill'
 
-    def post(self, bill_date=None, bill_type='ALL'):
+    def get_bill(self, bill_date=None, bill_type='ALL'):
         params = {}
         if bill_date:
             params = {'bill_date': bill_date,
@@ -348,6 +348,11 @@ class DownloadBill(WeChatPay):
         if not os.path.exists(os.path.join(WC_BILLS_PATH, month_dir)):
             os.makedirs(os.path.join(WC_BILLS_PATH, month_dir))
 
-        with open(os.path.join(WC_BILLS_PATH, month_dir) + "/WeChat_%s.csv" % (params['bill_date']), "wb") as f:
+        bill_file_dir = os.path.join(WC_BILLS_PATH, month_dir)
+
+        with open(os.path.join(bill_file_dir, "WeChat_%s.csv" % (params['bill_date'])), "wb") as f:
             f.write(res.encode("UTF-8"))
             f.close()
+# ====
+# a = DownloadBill().get_bill()
+# print 'hello '
