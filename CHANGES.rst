@@ -1,6 +1,13 @@
 Changelog
 ==============================
 
+1.0.6 - Jul.07, 2015
+------------------------------
+- Removed get_access_token()
+- Updated get_jsapi_ticket()
+- NOTE: for general usage, please use version 1.0
+
+
 1.0.5 - Jul.07, 2015
 ------------------------------
 - Django ORM added in DownloadBill

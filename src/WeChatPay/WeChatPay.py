@@ -4,7 +4,7 @@ import time
 import re
 import logging
 import datetime
-import ast
+import json
 import requests
 
 from django.conf import settings
@@ -33,9 +33,10 @@ def get_config(name):
 WC_PAY_APPID = get_config('WC_PAY_APPID')
 WC_PAY_MCHID = get_config('WC_PAY_MCHID')
 WC_PAY_KEY = get_config('WC_PAY_KEY')
+WC_ID = get_config('WC_ID')
 WC_PAY_APPSECRET = get_config('WC_PAY_APPSECRET')
 WC_BILLS_PATH = get_config('BILLS_DIR')
-WC_PAY_ACCESS_TOKEN_URL = get_config('WC_PAY_ACCESS_TOKEN_URL')
+
 WC_PAY_JSAPI_TICKET_URL = get_config('WC_PAY_JSAPI_TICKET_URL')
 
 
@@ -85,32 +86,26 @@ def xml_to_dict(xml):
     return sign, result
 
 
-def get_access_token():
-    """
-    获取access_token
-    :return: access_token
-    """
-    response = requests.get(
-        WC_PAY_ACCESS_TOKEN_URL)
-    logger.info('Make request to %s' % response.url)
-
-    resp_dict = ast.literal_eval(response.content)
-
-    return resp_dict['access_token']
-
-
-def get_jsapi_ticket():
+def get_jsapi_ticket(wechatid=WC_ID):
     """
     获取jsapi_ticket
     :return: jsapi_ticket
     """
-    response = requests.get(
-        WC_PAY_JSAPI_TICKET_URL)
+
+    params = {'wechatid': wechatid}
+    response = requests.post(WC_PAY_JSAPI_TICKET_URL, data=params)
     logger.info('Make request to %s' % response.url)
 
-    resp_dict = ast.literal_eval(response.content)
+    resp_dict = json.loads(response.content)
 
-    return resp_dict['jsapi_ticket']
+    if resp_dict['code'] == 0:
+        # print resp_dict
+        # print resp_dict['data']['jsapi_ticket']
+        return resp_dict['data']['jsapi_ticket']
+    else:
+        logger.info('code: %s, data: %s' %
+                    (resp_dict['code'], resp_dict['data']))
+        return ''
 
 
 def get_js_config_params(url, nonce_str, time_stamp):
@@ -389,5 +384,3 @@ class DownloadBill(WeChatPay):
             with open(self.file_path, "wb") as f:
                 f.write(res.encode("UTF-8"))
                 f.close()
-#====
-# a = DownloadBill().get_bill()
