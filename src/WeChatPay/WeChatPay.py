@@ -5,13 +5,14 @@ import re
 import logging
 import datetime
 import ast
+import requests
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-import requests
 
 from llt.utils import random_str, smart_str
 from llt.url import sign_url
+from reconciliations.models import BillLog
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
@@ -328,31 +329,65 @@ class DownloadBill(WeChatPay):
             app_id=app_id, mch_id=mch_id, api_key=api_key)
         self.url = 'https://api.mch.weixin.qq.com/pay/downloadbill'
 
+    def get_yesterday_date_str(self):
+        today = datetime.date.today()
+        t = datetime.timedelta(days=1)
+        # e.g. 20150705
+        yesterday = str(today - t)
+        return yesterday
+
+    def is_record_writen(self):
+        bill_log = BillLog.objects.filter(
+            date=self.bill_date, channel='WECHAT')
+        return bill_log
+
+    def is_wirte_file(self):
+        if not self.is_record_writen():
+            BillLog.objects.create(date=self.bill_date,
+                                   channel='WECHAT',
+                                   bill_status='SUCCESS',
+                                   file_path=self.rel_dir_name,
+                                   remark='{}',
+                                   )
+            return True
+        else:
+            return False
+
     def get_bill(self, bill_date=None, bill_type='ALL'):
         params = {}
         if bill_date:
-            params = {'bill_date': bill_date,
-                      'bill_type': bill_type}
+            self.bill_date = bill_date
         else:
-            today = datetime.date.today()
-            t = datetime.timedelta(days=1)
-            yesterday = str(today - t).replace('-', '')
-            params['bill_date'] = yesterday
-            params['bill_type'] = bill_type
+            self.bill_date = self.get_yesterday_date_str()
+        # reformat date string from yyyy-mm-dd to yyyymmdd
+        self.rf_bill_date = self.bill_date.replace('-', '')
+
+        params['bill_date'] = self.rf_bill_date
+        params['bill_type'] = bill_type
 
         self.set_params(**params)
         res = self.post_xml().replace('`', '')
 
-        month_dir = '%s' % params['bill_date'][:6]
+        # print '*' * 15
+        # print params
+        # print res
 
-        if not os.path.exists(os.path.join(WC_BILLS_PATH, month_dir)):
-            os.makedirs(os.path.join(WC_BILLS_PATH, month_dir))
-
+        month_dir = '%s' % self.rf_bill_date[:6]
         bill_file_dir = os.path.join(WC_BILLS_PATH, month_dir)
 
-        with open(os.path.join(bill_file_dir, "WeChat_%s.csv" % (params['bill_date'])), "wb") as f:
-            f.write(res.encode("UTF-8"))
-            f.close()
-# ====
+        if not os.path.exists(bill_file_dir):
+            os.makedirs(bill_file_dir)
+
+        self.file_path = os.path.join(
+            bill_file_dir, "WeChat_%s.csv" % (self.rf_bill_date))
+        self.rel_dir_name = os.path.relpath(self.file_path)
+
+        # print self.rel_dir_name
+        # print self.file_path
+        # print self.is_record_writen()
+        if self.is_wirte_file():
+            with open(self.file_path, "wb") as f:
+                f.write(res.encode("UTF-8"))
+                f.close()
+#====
 # a = DownloadBill().get_bill()
-# print 'hello '

@@ -1,6 +1,11 @@
 Changelog
 ==============================
 
+1.0.5 - Jul.07, 2015
+------------------------------
+- Django ORM added in DownloadBill
+- NOTE: for general usage, please use version 1.0
+
 1.0.4 - Jul.07, 2015
 ------------------------------
 - Bug fixing.
