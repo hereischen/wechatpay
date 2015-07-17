@@ -348,10 +348,21 @@ class DownloadBill(WeChatPay):
         else:
             return False
 
+    def date_validation(self, input_date):
+        today = datetime.date.today()
+        if input_date < today:
+            return True
+        else:
+            raise ValueError(
+                "Bill_date given: [%s] should before today's date: [%s]." % (input_date, today))
+
     def get_bill(self, bill_date=None, bill_type='ALL'):
         params = {}
         if bill_date:
-            self.bill_date = bill_date
+            input_bill_date = datetime.datetime.strptime(
+                bill_date, '%Y-%m-%d').date()
+            if self.date_validation(input_bill_date):
+                self.bill_date = str(input_bill_date)
         else:
             self.bill_date = self.get_yesterday_date_str()
         # reformat date string from yyyy-mm-dd to yyyymmdd
@@ -384,3 +395,5 @@ class DownloadBill(WeChatPay):
             with open(self.file_path, "wb") as f:
                 f.write(res.encode("UTF-8"))
                 f.close()
+
+# a = DownloadBill().get_bill('2015-07-16')
