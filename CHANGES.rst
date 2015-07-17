@@ -1,6 +1,12 @@
 Changelog
 ==============================
 
+1.0.7 - Jul.07, 2015
+------------------------------
+- Added date_validation() in DownloadBill()
+- NOTE: for general usage, please use version 1.0
+
+
 1.0.6 - Jul.07, 2015
 ------------------------------
 - Removed get_access_token()
