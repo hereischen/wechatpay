@@ -2,10 +2,10 @@ CHANGES.rst
 MANIFEST.in
 README.md
 setup.py
-src/WeChatPay/WeChatPay.py
-src/WeChatPay/__init__.py
-src/WeChatPay.egg-info/PKG-INFO
-src/WeChatPay.egg-info/SOURCES.txt
-src/WeChatPay.egg-info/dependency_links.txt
-src/WeChatPay.egg-info/not-zip-safe
-src/WeChatPay.egg-info/top_level.txt
+src/wechatpay/__init__.py
+src/wechatpay/wechatpay.py
+src/wechatpay.egg-info/PKG-INFO
+src/wechatpay.egg-info/SOURCES.txt
+src/wechatpay.egg-info/dependency_links.txt
+src/wechatpay.egg-info/not-zip-safe
+src/wechatpay.egg-info/top_level.txt

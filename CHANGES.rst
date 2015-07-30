@@ -1,13 +1,25 @@
 Changelog
 ==============================
 
-1.0.7 - Jul.07, 2015
+1.0.9 - Jul.30, 2015
+------------------------------
+- changed name to wechatpay
+- NOTE: for general usage, please use version 1.0
+
+1.0.8 - Jul.30, 2015
+------------------------------
+- changed name to wechatpay
+- NOTE: for general usage, please use version 1.0
+
+
+
+1.0.7 - Jul.16, 2015
 ------------------------------
 - Added date_validation() in DownloadBill()
 - NOTE: for general usage, please use version 1.0
 
 
-1.0.6 - Jul.07, 2015
+1.0.6 - Jul.13, 2015
 ------------------------------
 - Removed get_access_token()
 - Updated get_jsapi_ticket()
