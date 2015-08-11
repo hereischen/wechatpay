@@ -1,6 +1,12 @@
 Changelog
 ==============================
 
+1.1.1 - Aug.11, 2015
+------------------------------
+- fixed bugs, adding exceptions handling.
+- NOTE: for general usage, please use version 1.0
+
+
 1.1.0 - Aug.03, 2015
 ------------------------------
 - fixed bug in getbill for reconciliations when no bill exists.

@@ -144,7 +144,6 @@ class WeChatPay(object):
 
     def post_xml(self):
         xml = self.dict2xml(self.params)
-
         response = requests.post(self.url, data=xml)
         logger.info('Make post request to %s' % response.url)
         logger.debug('Request XML: %s' % xml)
@@ -198,7 +197,6 @@ class WeChatPay(object):
         if params['result_code'] != 'SUCCESS':
             logger.error('WeChat process request failed, result_code: [%s], err_code: [%s], err_code_des: [%s]' %
                          (params['result_code'], params.get('err_code', ''), params.get('err_code_des', '')))
-
         return params
 
 
@@ -360,10 +358,12 @@ class DownloadBill(WeChatPay):
                 "Bill_date given: [%s] should before today's date: [%s]." % (input_date, today))
 
     def is_responese_string(self, res):
-        if type(res) is str:
+        if type(res) is str or unicode:
             return True
         elif type(res) is dict:
             return False
+        else:
+            raise Exception(u'Invalid response type %s.' % type(res))
 
     def get_bill(self, bill_date=None, bill_type='ALL'):
         params = {}
@@ -433,3 +433,6 @@ class DownloadBill(WeChatPay):
                                            bill_status='FAIL',
                                            remark=remark,
                                            )
+
+if __name__ == '__main__':
+    a = DownloadBill().get_bill('2015-08-10')
