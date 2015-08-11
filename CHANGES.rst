@@ -1,6 +1,12 @@
 Changelog
 ==============================
 
+1.1.2 - Jul.30, 2015
+------------------------------
+- rename package name to wechatpay
+- NOTE: for general usage, please use version 1.0
+- please do not use WeChatPay from this release
+
 1.1.1 - Aug.11, 2015
 ------------------------------
 - fixed bugs, adding exceptions handling.

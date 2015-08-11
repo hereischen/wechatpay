@@ -2,8 +2,6 @@ CHANGES.rst
 MANIFEST.in
 README.md
 setup.py
-src/WeChatPay/WeChatPay.py
-src/WeChatPay/__init__.py
 src/wechatpay/__init__.py
 src/wechatpay/wechatpay.py
 src/wechatpay.egg-info/PKG-INFO

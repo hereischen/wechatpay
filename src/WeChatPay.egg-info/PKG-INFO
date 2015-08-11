@@ -1,6 +1,6 @@
 Metadata-Version: 1.1
 Name: wechatpay
-Version: 1.1.1
+Version: 1.1.2
 Summary: Python-Django WeChat payment API.
 Home-page: https://github.com/hereischen/WeChat
 Author: Haotong Chen
@@ -41,6 +41,12 @@ Description: # WeChat微信支付
         
         Changelog
         ==============================
+        
+        1.1.2 - Jul.30, 2015
+        ------------------------------
+        - rename package name to wechatpay
+        - NOTE: for general usage, please use version 1.0
+        - please do not use WeChatPay from this release
         
         1.1.1 - Aug.11, 2015
         ------------------------------
