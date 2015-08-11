@@ -286,6 +286,10 @@ class OrderQuery(WeChatPay):
         return self.post_xml()
 
 
+class Notify(WeChatPay):
+    pass
+
+
 class Refund(WeChatPay):
 
     def __init__(self, app_id=WC_PAY_APPID, mch_id=WC_PAY_MCHID, api_key=WC_PAY_KEY):
