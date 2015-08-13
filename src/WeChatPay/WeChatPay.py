@@ -317,7 +317,7 @@ class RefundQuery(WeChatPay):
     def post(self, out_refund_no):
         params = {'out_refund_no': out_refund_no}
         self.set_params(**params)
-        return self.post_xml_ssl()
+        return self.post_xml()
 
 
 class DownloadBill(WeChatPay):

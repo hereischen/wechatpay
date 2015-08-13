@@ -1,6 +1,13 @@
 Changelog
 ==============================
 
+1.1.4 - Aug.13, 2015
+------------------------------
+- changed post_xml_ssh to post_xml in RefundQuery
+- NOTE: for general usage, please use version 1.0
+- please do not use WeChatPay from this release
+
+
 1.1.3 - Aug.11,, 2015
 ------------------------------
 - bug fixing
