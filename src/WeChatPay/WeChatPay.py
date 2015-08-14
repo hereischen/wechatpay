@@ -362,7 +362,7 @@ class DownloadBill(WeChatPay):
                 "Bill_date given: [%s] should before today's date: [%s]." % (input_date, today))
 
     def is_responese_string(self, res):
-        if type(res) is str or unicode:
+        if type(res) is unicode:
             return True
         elif type(res) is dict:
             return False

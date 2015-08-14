@@ -7,7 +7,7 @@ README = open(os.path.join(BASE_DIR, 'README.md')).read()
 CHANGES = open(os.path.join(BASE_DIR, 'CHANGES.rst')).read()
 
 setup(name='wechatpay',
-      version='1.1.4',
+      version='1.1.5',
       description='Python-Django WeChat payment API.',
       long_description=README + '\n\n' + CHANGES,
       author='Haotong Chen',

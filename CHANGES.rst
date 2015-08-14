@@ -1,5 +1,11 @@
 Changelog
 ==============================
+1.1.5 - Aug.14, 2015
+------------------------------
+- condition check bug fixed 
+- NOTE: for general usage, please use version 1.0
+- please do not use WeChatPay from this release
+
 
 1.1.4 - Aug.13, 2015
 ------------------------------
