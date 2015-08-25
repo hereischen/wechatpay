@@ -28,4 +28,6 @@ API
 ---
 
 To donwload bill of 2015-07-26, call:
- a = DownloadBill().get_bill('2015-07-26')
+```python
+a = DownloadBill().get_bill('2015-07-26')
+```
