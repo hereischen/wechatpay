@@ -17,6 +17,9 @@ from reconciliations.models import BillLog
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
 
+# 微信下载bill的时间,每日13点
+GET_BILL_TIME = 13
+
 
 def get_config(name):
     """
@@ -355,8 +358,19 @@ class DownloadBill(WeChatPay):
 
     def date_validation(self, input_date):
         today = datetime.date.today()
+        t = datetime.timedelta(days=1)
+        yesterday = (today - t)
+        now = datetime.datetime.now()
         if input_date < today:
-            return True
+            if input_date == yesterday:
+                if now.hour > GET_BILL_TIME:
+                    return True
+                else:
+                    raise ValueError(
+                        'Get bill time:[%s] must later then %s.' % (
+                            now.hour, GET_BILL_TIME))
+            else:
+                return True
         else:
             raise ValueError(
                 "Bill_date given: [%s] should before today's date: [%s]." % (input_date, today))
@@ -438,5 +452,4 @@ class DownloadBill(WeChatPay):
                                            remark=remark,
                                            )
 
-if __name__ == '__main__':
-    a = DownloadBill().get_bill('2015-08-10')
+# a = DownloadBill().get_bill('2015-08-24')
