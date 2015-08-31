@@ -363,11 +363,11 @@ class DownloadBill(WeChatPay):
         now = datetime.datetime.now()
         if input_date < today:
             if input_date == yesterday:
-                if now.hour > GET_BILL_TIME:
+                if now.hour >= GET_BILL_TIME:
                     return True
                 else:
                     raise ValueError(
-                        'Get bill time:[%s] must later then %s.' % (
+                        "Get bill time:[%s] o‘clock must later then %s o‘clock." % (
                             now.hour, GET_BILL_TIME))
             else:
                 return True
