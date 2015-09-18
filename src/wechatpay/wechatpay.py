@@ -246,12 +246,12 @@ class AppOrderPay(UnifiedOrderPay):
     """
 
     def __init__(self, app_id=WC_PAY_APPID, mch_id=WC_PAY_MCHID, api_key=WC_PAY_KEY):
-        super(NativeOrderPay, self).__init__(
+        super(AppOrderPay, self).__init__(
             app_id=app_id, mch_id=mch_id, api_key=api_key)
         self.trade_type = 'APP'
 
     def post(self, body, out_trade_no, total_fee, spbill_create_ip, notify_url):
-        return super(NativeOrderPay, self)._post(body, out_trade_no, total_fee, spbill_create_ip, notify_url)
+        return super(AppOrderPay, self)._post(body, out_trade_no, total_fee, spbill_create_ip, notify_url)
 
 
 class JsAPIOrderPay(UnifiedOrderPay):
