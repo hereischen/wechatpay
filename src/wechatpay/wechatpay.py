@@ -21,12 +21,12 @@ logger = logging.getLogger(__name__)
 GET_BILL_TIME = 13
 
 
-def get_config(name):
+def get_config(name, config_default=None):
     """
     Get configuration variable from environment variable
     or django setting.py
     """
-    config = os.environ.get(name, getattr(settings, name, None))
+    config = os.environ.get(name, getattr(settings, name, config_default))
     if config:
         return config
     else:
@@ -81,16 +81,31 @@ def xml_to_dict(xml):
     return sign, result
 
 
+class WechatConfig(object):
+    def __init__(self, **kwargs):
+        self.app_id = kwargs['app_id']
+        self.mch_id = kwargs['mch_id']
+        self.api_key = kwargs['api_key']
+        self.app_secret = kwargs['app_secret']
+        self.api_cert_file = kwargs['api_cert_file']
+        self.api_key_file = kwargs['api_key_file']
+        self.jsapi_ticket_id = kwargs['jsapi_ticket_id']
+        self.jsapi_ticket_url = kwargs['jsapi_ticket_url']
+
+    def __str__(self):
+        return "WechatConfig object: " + str(self.__dict__)
+
+
 class WeChatPay(object):
 
     def __init__(self, wechat_config):
         self.app_id = wechat_config.app_id
         self.mch_id = wechat_config.mch_id
-        self.api_key = wechat_config.key
+        self.api_key = wechat_config.api_key
         self.app_secret = wechat_config.app_secret
         self.cert_file = wechat_config.api_cert_file
         self.key_file = wechat_config.api_key_file
-        self.id = wechat_config.id
+        self.jsapi_ticket_id = wechat_config.jsapi_ticket_id
         self.jsapi_ticket_url = wechat_config.jsapi_ticket_url
 
         self.common_params = {'appid': self.app_id,
@@ -165,7 +180,7 @@ class WeChatPay(object):
         :return: jsapi_ticket
         """
 
-        params = {'wechatid': self.id}
+        params = {'wechatid': self.jsapi_ticket_id}
         response = requests.post(self.jsapi_ticket_url, data=params)
         logger.info('Make request to %s' % response.url)
 
