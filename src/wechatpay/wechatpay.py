@@ -32,15 +32,7 @@ def get_config(name):
     else:
         raise ImproperlyConfigured("Can't find config for '%s' either in environment"
                                    "variable or in settings.py" % name)
-
-WC_PAY_APPID = get_config('WC_PAY_APPID')
-WC_PAY_MCHID = get_config('WC_PAY_MCHID')
-WC_PAY_KEY = get_config('WC_PAY_KEY')
-WC_ID = get_config('WC_ID')
-WC_PAY_APPSECRET = get_config('WC_PAY_APPSECRET')
 WC_BILLS_PATH = get_config('BILLS_DIR')
-
-WC_PAY_JSAPI_TICKET_URL = get_config('WC_PAY_JSAPI_TICKET_URL')
 
 
 def dict_to_xml(params, sign):
@@ -89,49 +81,18 @@ def xml_to_dict(xml):
     return sign, result
 
 
-def get_jsapi_ticket(wechatid=WC_ID):
-    """
-    获取jsapi_ticket
-    :return: jsapi_ticket
-    """
-
-    params = {'wechatid': wechatid}
-    response = requests.post(WC_PAY_JSAPI_TICKET_URL, data=params)
-    logger.info('Make request to %s' % response.url)
-
-    resp_dict = json.loads(response.content)
-
-    if resp_dict['code'] == 0:
-        # print resp_dict
-        # print resp_dict['data']['jsapi_ticket']
-        return resp_dict['data']['jsapi_ticket']
-    else:
-        logger.info('code: %s, data: %s' %
-                    (resp_dict['code'], resp_dict['data']))
-        return ''
-
-
-def get_js_config_params(url, nonce_str, time_stamp):
-    """
-    获取js_config初始化参数
-    """
-    params = {'noncestr': nonce_str,
-              'jsapi_ticket': get_jsapi_ticket(),
-              'timestamp': '%d' % time_stamp,
-              'url': url}
-
-    # params['signature'] = calculate_sign(params, sign_type='sha1',
-    # upper_case=False)
-    params['signature'] = sign_url(params, '', sign_type='sha1')
-    return params
-
-
 class WeChatPay(object):
 
-    def __init__(self, app_id=WC_PAY_APPID, mch_id=WC_PAY_MCHID, api_key=WC_PAY_KEY):
-        self.app_id = app_id
-        self.mch_id = mch_id
-        self.api_key = api_key
+    def __init__(self, wechat_config):
+        self.app_id = wechat_config.app_id
+        self.mch_id = wechat_config.mch_id
+        self.api_key = wechat_config.key
+        self.app_secret = wechat_config.app_secret
+        self.cert_file = wechat_config.api_cert_file
+        self.key_file = wechat_config.api_key_file
+        self.id = wechat_config.id
+        self.jsapi_ticket_url = wechat_config.jsapi_ticket_url
+
         self.common_params = {'appid': self.app_id,
                               'mch_id': self.mch_id}
         self.params = {}
@@ -158,14 +119,10 @@ class WeChatPay(object):
     def post_xml_ssl(self):
         xml = self.dict2xml(self.params)
 
-        cert_file = os.sep.join(
-            [settings.ROOT_DIR, 'config/wechat/apiclient_cert.pem'])
-        key_file = os.sep.join(
-            [settings.ROOT_DIR, 'config/wechat/apiclient_key.pem'])
-        logger.debug('Cert file: %s' % cert_file)
-        logger.debug('Key file: %s' % key_file)
+        logger.debug('Cert file: %s' % self.cert_file)
+        logger.debug('Key file: %s' % self.key_file)
         response = requests.post(
-            self.url, data=xml, verify=True, cert=(cert_file, key_file))
+            self.url, data=xml, verify=True, cert=(self.cert_file, self.key_file))
         logger.info('Make SSL post request to %s' % response.url)
         logger.debug('Request XML: %s' % xml)
         logger.debug('Response encoding: %s' % response.encoding)
@@ -202,12 +159,46 @@ class WeChatPay(object):
                          (params['result_code'], params.get('err_code', ''), params.get('err_code_des', '')))
         return params
 
+    def get_jsapi_ticket(self):
+        """
+        获取jsapi_ticket
+        :return: jsapi_ticket
+        """
+
+        params = {'wechatid': self.id}
+        response = requests.post(self.jsapi_ticket_url, data=params)
+        logger.info('Make request to %s' % response.url)
+
+        resp_dict = json.loads(response.content)
+
+        if resp_dict['code'] == 0:
+            # print resp_dict
+            # print resp_dict['data']['jsapi_ticket']
+            return resp_dict['data']['jsapi_ticket']
+        else:
+            logger.info('code: %s, data: %s' %
+                        (resp_dict['code'], resp_dict['data']))
+            return ''
+
+    def get_js_config_params(self, url, nonce_str, time_stamp):
+        """
+        获取js_config初始化参数
+        """
+        params = {'noncestr': nonce_str,
+                  'jsapi_ticket': self.get_jsapi_ticket(),
+                  'timestamp': '%d' % time_stamp,
+                  'url': url}
+
+        # params['signature'] = calculate_sign(params, sign_type='sha1',
+        # upper_case=False)
+        params['signature'] = sign_url(params, '', sign_type='sha1')
+        return params
+
 
 class UnifiedOrderPay(WeChatPay):
 
-    def __init__(self, app_id=WC_PAY_APPID, mch_id=WC_PAY_MCHID, api_key=WC_PAY_KEY):
-        super(UnifiedOrderPay, self).__init__(
-            app_id=app_id, mch_id=mch_id, api_key=api_key)
+    def __init__(self, wechat_config):
+        super(UnifiedOrderPay, self).__init__(wechat_config)
         self.url = 'https://api.mch.weixin.qq.com/pay/unifiedorder'
         self.trade_type = ''
 
@@ -230,9 +221,8 @@ class NativeOrderPay(UnifiedOrderPay):
     Native 统一支付类
     """
 
-    def __init__(self, app_id=WC_PAY_APPID, mch_id=WC_PAY_MCHID, api_key=WC_PAY_KEY):
-        super(NativeOrderPay, self).__init__(
-            app_id=app_id, mch_id=mch_id, api_key=api_key)
+    def __init__(self, wechat_config):
+        super(NativeOrderPay, self).__init__(wechat_config)
         self.trade_type = 'NATIVE'
 
     def post(self, body, out_trade_no, total_fee, spbill_create_ip, notify_url):
@@ -245,9 +235,9 @@ class AppOrderPay(UnifiedOrderPay):
     App 统一支付类
     """
 
-    def __init__(self, app_id=WC_PAY_APPID, mch_id=WC_PAY_MCHID, api_key=WC_PAY_KEY):
+    def __init__(self, wechat_config):
         super(AppOrderPay, self).__init__(
-            app_id=app_id, mch_id=mch_id, api_key=api_key)
+            wechat_config)
         self.trade_type = 'APP'
 
     def post(self, body, out_trade_no, total_fee, spbill_create_ip, notify_url):
@@ -260,9 +250,8 @@ class JsAPIOrderPay(UnifiedOrderPay):
     H5页面的js调用类
     """
 
-    def __init__(self, app_id=WC_PAY_APPID, mch_id=WC_PAY_MCHID, api_key=WC_PAY_KEY):
-        super(JsAPIOrderPay, self).__init__(
-            app_id=app_id, mch_id=mch_id, api_key=api_key)
+    def __init__(self, wechat_config):
+        super(JsAPIOrderPay, self).__init__(wechat_config)
         self.trade_type = 'JSAPI'
 
     def post(self, body, out_trade_no, total_fee, spbill_create_ip, notify_url, open_id, url):
@@ -286,16 +275,15 @@ class JsAPIOrderPay(UnifiedOrderPay):
         print "sgin done!"
 
         unified_order.update({'pay_params': pay_params,
-                              'config_params': get_js_config_params(url, nonce_str, time_stamp)})
+                              'config_params': self.get_js_config_params(url, nonce_str, time_stamp)})
 
         return unified_order
 
 
 class OrderQuery(WeChatPay):
 
-    def __init__(self, app_id=WC_PAY_APPID, mch_id=WC_PAY_MCHID, api_key=WC_PAY_KEY):
-        super(OrderQuery, self).__init__(
-            app_id=app_id, mch_id=mch_id, api_key=api_key)
+    def __init__(self, wechat_config):
+        super(OrderQuery, self).__init__(wechat_config)
         self.url = 'https://api.mch.weixin.qq.com/pay/orderquery'
 
     def post(self, out_trade_no):
@@ -310,9 +298,8 @@ class Notify(WeChatPay):
 
 class Refund(WeChatPay):
 
-    def __init__(self, app_id=WC_PAY_APPID, mch_id=WC_PAY_MCHID, api_key=WC_PAY_KEY):
-        super(Refund, self).__init__(
-            app_id=app_id, mch_id=mch_id, api_key=api_key)
+    def __init__(self, wechat_config):
+        super(Refund, self).__init__(wechat_config)
         self.url = 'https://api.mch.weixin.qq.com/secapi/pay/refund'
 
     def post(self, out_trade_no, out_refund_no, total_fee, refund_fee):
@@ -327,9 +314,8 @@ class Refund(WeChatPay):
 
 class RefundQuery(WeChatPay):
 
-    def __init__(self, app_id=WC_PAY_APPID, mch_id=WC_PAY_MCHID, api_key=WC_PAY_KEY):
-        super(RefundQuery, self).__init__(
-            app_id=app_id, mch_id=mch_id, api_key=api_key)
+    def __init__(self, wechat_config):
+        super(RefundQuery, self).__init__(wechat_config)
         self.url = 'https://api.mch.weixin.qq.com/pay/refundquery'
 
     def post(self, out_refund_no):
@@ -340,9 +326,8 @@ class RefundQuery(WeChatPay):
 
 class DownloadBill(WeChatPay):
 
-    def __init__(self, app_id=WC_PAY_APPID, mch_id=WC_PAY_MCHID, api_key=WC_PAY_KEY):
-        super(DownloadBill, self).__init__(
-            app_id=app_id, mch_id=mch_id, api_key=api_key)
+    def __init__(self, wechat_config):
+        super(DownloadBill, self).__init__(wechat_config)
         self.url = 'https://api.mch.weixin.qq.com/pay/downloadbill'
 
     def post_xml(self):
