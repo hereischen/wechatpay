@@ -6,6 +6,7 @@ import logging
 import datetime
 import json
 import requests
+import urllib2
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
@@ -82,6 +83,7 @@ def xml_to_dict(xml):
 
 
 class WechatConfig(object):
+
     def __init__(self, **kwargs):
         self.app_id = kwargs['app_id']
         self.mch_id = kwargs['mch_id']
@@ -254,6 +256,33 @@ class AppOrderPay(UnifiedOrderPay):
         super(AppOrderPay, self).__init__(
             wechat_config)
         self.trade_type = 'APP'
+
+    def post_xml(self):
+        xml = self.dict2xml(self.params)
+
+        r = urllib2.Request(self.url, data=xml,
+                            headers={'Content-Type': 'application/xml'})
+        u = urllib2.urlopen(r)
+        response = u.read()
+        # response = requests.post(self.url, data=xml)
+        logger.info('Make post request to %s' % response.url)
+        logger.debug('Request XML: %s' % xml)
+        logger.debug('Response encoding: %s' % response.encoding)
+        logger.debug('Response XML: %s' % ''.join(response.text.splitlines()))
+
+        return self.xml2dict(response.text.encode(response.encoding)) if response.encoding else response.text
+
+    def _post(self, body, out_trade_no, total_fee, spbill_create_ip, notify_url, **kwargs):
+        params = {'body': body,
+                  'out_trade_no': out_trade_no,
+                  'total_fee': total_fee,
+                  'spbill_create_ip': spbill_create_ip,
+                  'notify_url': notify_url,
+                  'trade_type': self.trade_type}
+        params.update(**kwargs)
+
+        self.set_params(**params)
+        return self.post_xml()
 
     def post(self, body, out_trade_no, total_fee, spbill_create_ip, notify_url):
         return super(AppOrderPay, self)._post(body, out_trade_no, total_fee, spbill_create_ip, notify_url)
