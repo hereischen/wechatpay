@@ -13,6 +13,7 @@ from django.core.exceptions import ImproperlyConfigured
 from llt.utils import random_str, smart_str
 from llt.url import sign_url
 from reconciliations.models import BillLog
+from core.models import ChannelAccount
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
@@ -82,15 +83,15 @@ def xml_to_dict(xml):
 
 
 class WechatConfig(object):
-    def __init__(self, **kwargs):
-        self.app_id = kwargs['app_id']
-        self.mch_id = kwargs['mch_id']
-        self.api_key = kwargs['api_key']
-        self.app_secret = kwargs['app_secret']
-        self.api_cert_file = kwargs['api_cert_file']
-        self.api_key_file = kwargs['api_key_file']
-        self.jsapi_ticket_id = kwargs['jsapi_ticket_id']
-        self.jsapi_ticket_url = kwargs['jsapi_ticket_url']
+    def __init__(self, channel_config):
+        self.app_id = channel_config['app_id']
+        self.mch_id = channel_config['mch_id']
+        self.api_key = channel_config['api_key']
+        self.app_secret = channel_config['app_secret']
+        self.api_cert_file = os.path.join(settings.ROOT_DIR, channel_config['api_cert_file'])
+        self.api_key_file = os.path.join(settings.ROOT_DIR, channel_config['api_key_file'])
+        self.jsapi_ticket_id = channel_config.get('jsapi_ticket_id', '')
+        self.jsapi_ticket_url = channel_config.get('jsapi_ticket_url', '')
 
     def __str__(self):
         return "WechatConfig object: " + str(self.__dict__)
@@ -344,6 +345,8 @@ class DownloadBill(WeChatPay):
     def __init__(self, wechat_config):
         super(DownloadBill, self).__init__(wechat_config)
         self.url = 'https://api.mch.weixin.qq.com/pay/downloadbill'
+        self.unique_id = 'wechat_%s_%s' % (wechat_config.app_id, wechat_config.mch_id)
+        self.channel_account = ChannelAccount.objects.get(unique_id=self.unique_id)
 
     def post_xml(self):
         xml = self.dict2xml(self.params)
@@ -368,7 +371,7 @@ class DownloadBill(WeChatPay):
 
     def is_record_writen(self):
         bill_log = BillLog.objects.filter(
-            date=self.bill_date, channel='WECHAT')
+            date=self.bill_date, channel_account=self.channel_account)
         return bill_log
 
     def date_validation(self, input_date):
@@ -398,7 +401,7 @@ class DownloadBill(WeChatPay):
         else:
             raise Exception(u'Invalid response type %s.' % type(res))
 
-    def get_bill(self, bill_date=None, bill_type='ALL'):
+    def get_res(self, bill_date=None, bill_type='ALL'):
         params = {}
         if bill_date:
             input_bill_date = datetime.datetime.strptime(
@@ -408,6 +411,7 @@ class DownloadBill(WeChatPay):
         else:
             self.bill_date = self.get_yesterday_date_str()
         # reformat date string from yyyy-mm-dd to yyyymmdd
+        print 'input_date>>>', self.bill_date
         self.rf_bill_date = self.bill_date.replace('-', '')
 
         params['bill_date'] = self.rf_bill_date
@@ -415,23 +419,27 @@ class DownloadBill(WeChatPay):
 
         self.set_params(**params)
 
-        res = self.post_xml()
-        # print params
-        # print res
+        return self.post_xml()
+
+    def create_bill_log(self, bill_status, file_path, remark):
+        BillLog.objects.create(date=self.bill_date,
+                               bill_status=bill_status,
+                               file_path=file_path,
+                               remark=remark,
+                               channel_account=self.channel_account,
+                               )
+
+    def get_bill(self, bill_date=None, bill_type='ALL'):
+        res = self.get_res(bill_date, bill_type)
 
         month_dir = '%s' % self.rf_bill_date[:6]
         bill_file_dir = os.path.join(WC_BILLS_PATH, month_dir)
-
         if not os.path.exists(bill_file_dir):
             os.makedirs(bill_file_dir)
 
         self.file_path = os.path.join(
-            bill_file_dir, "WeChat_%s.csv" % (self.rf_bill_date))
+            bill_file_dir, "%s_%s.csv" % (self.unique_id, self.rf_bill_date))
         self.rel_dir_name = os.path.relpath(self.file_path)
-
-        # print self.rel_dir_name
-        # print self.file_path
-        # print self.is_record_writen()
 
         # 成功取回外部账单
         if self.is_responese_string(res):
@@ -441,30 +449,19 @@ class DownloadBill(WeChatPay):
                 with open(self.file_path, "wb") as f:
                     f.write(res.encode("UTF-8"))
                     f.close()
-
-                BillLog.objects.create(date=self.bill_date,
-                                       channel='WECHAT',
-                                       bill_status='SUCCESS',
-                                       file_path=self.rel_dir_name,
-                                       remark='{}',
-                                       )
+                self.create_bill_log('SUCCESS', self.rel_dir_name, '{}')
         else:
             # 对账单文件为空，不创建，只写入数据库信息
             if res['return_msg'] == 'No Bill Exist':
                 remark = json.dumps(res)
                 if not self.is_record_writen():
-                    BillLog.objects.create(date=self.bill_date,
-                                           channel='WECHAT',
-                                           bill_status='EMPTY',
-                                           remark=remark,
-                                           )
+                    self.create_bill_log('EMPTY', file_path='N/A', remark=remark)
             else:
                 remark = json.dumps(res)
                 if not self.is_record_writen():
-                    BillLog.objects.create(date=self.bill_date,
-                                           channel='WECHAT',
-                                           bill_status='FAIL',
-                                           remark=remark,
-                                           )
+                    self.create_bill_log('FAIL', file_path='N/A', remark=remark)
 
-# a = DownloadBill().get_bill('2015-08-24')
+# ==================================================================
+# l = ChannelAccount.objects.filter(channel=1)
+# for d in l:
+#     DownloadBill(WechatConfig(d.config)).get_bill('2015-10-15')
